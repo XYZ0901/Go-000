@@ -50,7 +50,65 @@ A:
 - **在线运行时** ：k8s、Prometheus(指标采集,alertManage报警)、ELK(日志采集)、Control Panel(微服务治理控制面板)
 ### 可用性 & 兼容性设计
 - 以Design For Failure思想为核心，即鲁棒性编程
-- 采用粗粒度的进程间通信
+- 采用粗粒度进行进程间通信，比如接口batch化
+- **可用性问题** ：隔离、超时、负载保护、限流、降级、重试、负载均衡...
+- **必须保持接口兼容性**
+- **发送时保守，接受时开放** ：最小化传送必要的信息，最大化程度容忍冗余数据(通过数据校验保证兼容性)。
 ## 微服务设计
+### 某大型交友网站1.0
+- 从单体结构按照垂直功能进行拆分服务，所有服务接口对外暴露。显示出大量问题：  
+  1. C<->S 直接通信，强耦合。
+  2. C端需要多次请求，在C端进行数据耦合，造成C端开发的高工作量、高延迟。(面向用户业务场景的API,而不是面向资源的API)。
+  3. 协议不统一
+  4. 面向C的API适配
+  5. 多终端兼容逻辑复杂
+  6. 统一逻辑无法收敛，如果auth、限流，修复漏洞需要所有服务一起升级
+- 需要将工作模式内聚化
+### 某大型交友网站2.0
+- **app-interface/BFF(Backend For Frontend)**  
+统一协议，以网关小组作为中间层，统一各个服务的协议发给C端。  
+可将BFF认为是一种适配服务，即聚合S端向C端暴露统一协议的API。BFF用作数据整合。
+    1. 轻量交互 ：针对不同设备做协议适配
+    2. 差异服务 ：针对不同终端定制化API
+    3. 动态升级 ：服务端可以随意升级,不会影响到C端与网关的交互
+    4. 沟通效率提升
+### 某大型交友网站3.0
+- **single point of failure**  
+BFF属于single point of failure，可能由于代码缺陷或者流量洪峰引发的集体宕机。  
+Q1: 单个模块导致后续业务集成复杂度高，团队之间协调成本高，交付效率低下。  
+A1: 可将单一高集成度的BFF拆分为多个较低集成度BFF。  
+Q2: 由于安全认证、日志监控、限流熔断等横切面逻辑都集成到每个BFF上，当BFF节点过多时，升级横切面逻辑造成多节点需要一起升级，过于繁琐复杂。
+### 某大型交友网站4.0
+- **API GateWay**  
+将跨横切面(Cross-Cutting Concerns)的功能,如路由、认证、限流、安全等全部从BFF中抽出并上沉到GateWay(Envoy)。关注点分离。  
+- 最后的分层：服务层只暴露在内网中。BFF用于业务组装，通过API GateWay暴露对外。
+- 在本网站中BFF由nodejs做服务端渲染(SSR, Server-Side Rendering)
+- API GateWay上层还有CDN、4/7层负载均衡(ELB)
+### MircoService 划分 
+- 按照部门职能划分
+- DDD 限界上下文划分，面向业务场景划分(推荐！闭环！)
+    1. 从组织结构上 形成闭环的部门划分为一个服务，而不是太过分散
+    2. 服务过细需整合
+- **CQRS(Command Query Responsibility Segregation)** 
+    1. 读写分离
+    2. 从pull变成push 即从查询变成推送，订阅化。(db -> canal -> MQ中间件)
+### MircoService 安全
+- API Gateway 基于业务的auth鉴权 Token -> JWT
+- BFF 校验Token完整性并将身份信息 JWT -> UserID
+- API GateWay -> BFF -> Service 《==》 Biz Auth -> JWT -> Request Args
+- Full Trust, Half Trust, Zero Trust
 ## gRPC & 服务发现
+### gRPC (具体可以http://www.google.com)
+- 多语言：语言中立
+- 轻量级、高性能：PB，代码即文档 文档即代码
+- 可插拔：支持插件
+- IDL：可通过proto生成代码
+- 设计理念
+- 移动端：支持标准http2、支持TCP单链接复用。(这里建议可看net/rpc的源码)
+- 服务而非对象、消息非引用
+- 负载无关的：可使用不同的消息类型和编码 pb、JSON、XML、Thrift
+- 流
+- 阻塞式和非阻塞式
+- 元数据交换
+- 标准状态码
 ## 多集群 & 多租户
