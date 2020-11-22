@@ -13,7 +13,7 @@ func main() {
 type service struct{}
 
 // Subset 子集算法 backends: 服务节点  clientId: 客户端id  subsetSize: 子集大小
-func Subset(backends []int, clientId, subsetSize int) []int {
+func Subset(backends []service, clientId, subsetSize int) []service {
 	subsetCount := len(backends) / subsetSize
 
 	round := clientId / subsetCount
