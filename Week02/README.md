@@ -40,3 +40,21 @@
 - 在两个包中间产生依赖关系：无法二次修改现在包所返回的error，存在高耦合、无法重构
 - **总结:尽可能避免sentinel errors**
 ### Error types
+- Error type是实现了error接口的自定义类型，可以自定义需要的上下文及各种信息
+- Error type是一个type 所以可以被**断言**用来获取更多的上下文信息
+- VS Sentinel Error
+    - Error type可以提供更多的上下文
+    - 一样会public，与调用者产生强耦合，导致API变得脆弱。
+    - 也需要尽量避免Error types
+### Opaque errors (最标准、建议的方法)
+- 只知道对或错 只能 err != nil
+- 但无法携带上下文信息
+- Assert errors for behaviour, not type
+    - 通过定一个 interface ，然后暴露相关的Is方法去判断err，调用库内部断言。
+- **具体选择哪种还是得需要看场景**
+## Handing Error
+### Indented flow is for errors
+- err != nil 而不是 err == nil
+### Eliminate error handling by eliminating errors
+- 代码编写时可以直接返回err的 别用 err != nil
+- 利用已经封装好的方法去消除代码中的err
