@@ -6,7 +6,8 @@
 - Error In C++
     - 引入 exception 但无法知道被调用方抛出的是什么类型的异常
 - Error In Java
-    - 
+    - 引入 checked exception 但不同的使用者会有不同处理方法，变得太司空见惯，严重程度只能人为区分，
+    并且容易被使用者滥用，如经常 catch (e Exception) { // ignore }
 ### Error In Go
 - Go中的error只是一个普通的interface 包含一个 Error() string 方法
 - 使用 errors.New() 创建一个error对象，返回的是 errorString 结构体的指针
@@ -21,3 +22,21 @@
     - Q2: 案例: 服务更新中导致gRPC初始化的client连不上
     - A2: 也是看业务，如果gRPC是Blocking(阻塞):等待重连、nonBlocking(非阻塞):立刻返回一个default、
     nonBlocking+timeout(非阻塞+超时/推荐):先尝试重连如果超时返回default
+- 只有真正意外、不可恢复的程序错误才会使用 panic , 如 索引越界、不可恢复的环境问题、栈溢出，才使用panic。除此之外都是error。
+- go error 特点:
+    - 简单
+    - Plan for failure not success
+    - 没有隐藏的控制流
+    - 完全交给你来控制error
+    - Error are values
+## Error Type
+### Sentinel Error
+- sentinel error: 预定义错误,特定的不可能进行进一步处理的做法
+- if err == ErrSomething { ... } 类似的sentinel error比如: io.EOF、syscall.ENOENT
+- 最不灵活，必须利用==判断，无法提供上下文。只能利用error.Error()查看错误输出。
+- 会变成API公共部分
+    - 增加API表面积
+    - 所有的接口都会被限制为只能返回该类型的错误，即使可以提供更具描述性的错误
+- 在两个包中间产生依赖关系：无法二次修改现在包所返回的error，存在高耦合、无法重构
+- **总结:尽可能避免sentinel errors**
+### Error types
