@@ -57,4 +57,43 @@
 - err != nil 而不是 err == nil
 ### Eliminate error handling by eliminating errors
 - 代码编写时可以直接返回err的 别用 err != nil
-- 利用已经封装好的方法去消除代码中的err
+- 利用已经封装好的标准库方法去消除代码中的err
+- 将err封装进struct,利用struct的方法将if err隐藏起来，在方法内部判断struct.err
+### Wrap errors
+- 在之前的auth代码中错误会一直上抛，当程序顶端捕获到err的时候才会打印相关日志，但没有上下文信息。
+- 在⬆️的基础上，我们改进上抛错误机制，引入`fmt.Errorf("xxxxx fail:%v",err)`,虽然有了具体错误信息，
+但没有堆栈file:line信息，找起来麻烦，并且与sentinel err不兼容、等值判定失败。
+- **you should only handle errors once.**
+    - 如果发生错误，只允许一次日志。而不是每次err上抛都记录一次。
+- 错误处理契约规定
+    - 在出现err的情况下必须做处理、上抛，且不能对value做任何假设
+    - 除非需要降级时候才可以不对err处理，并且将value设为default
+- 日志记录只需要记录与错误相关且对调试有帮助的信息。
+    - 错误必须被日志记录。
+    - 应用程序处理错误，必须保证value的完整性。
+    - 错误只被日志记录一次。
+    - [github.com/pkg/errors][1]
+- [pkg/errors][1]
+    - errors.Wrap 附带错误的堆栈信息
+    - errors.WithMessage 附带自定义信息
+    - errors.Cause(err error) 返回最底层error
+    - 通过 %+v 输出err的堆栈信息
+    - 通过 errors.Wrap 不需要而外的log，并且可以携带上下文
+- **如何使用 [pkg/errors][1]**
+    - 在应用代码中通过 errors.New | errors.Errorf 返回错误
+    - 如果是同程序内调用，直接`return err`,如果不透传而使用errors.Wrap,将会导致双倍的堆栈信息
+    - 如果调用的是第三方库或者基础库，考虑使用errors.Wrap | errors.Wrapf 保存堆栈信息
+    - 包内直接返回错误，而不是每个错误地方打日志
+    - 在程序顶部或API入口处使用 %+v 打印并记录详细的堆栈信息
+    - 通过使用 errors.Cause 获取 root error,再使用sentinel error判断
+    - 作为基础库或第三方库，不应该返回errors.Wrap 而返回 root err, 只允许在业务代码中Wrap
+    - 如果当前逻辑中不处理err，则可以将err wrap到上层，并携带足够的上下文，如 request params
+    - 如果当前逻辑中已经处理err，则该err不再上抛 而是返回nil，如降级处理
+## Go 1.13 errors
+### Errors before Go 1.13
+- 最简单的错误检查: err != nil
+- 利用sentinel error: err == ErrNotFound
+- 实现 error interface 的自定义 error struct 并利用断言: err.(*NotFoundError)
+- 利用 fmt.Errorf 丢弃了除err的文本信息外的其它信息
+
+[1]: https://github.com/pkg/errors

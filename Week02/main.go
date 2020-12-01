@@ -1,7 +1,6 @@
 package main
 
 import (
-	"Week02/service"
 	"log"
 	"net/http"
 )
