@@ -15,7 +15,7 @@
 预防err文本内容一致但实际意义及环境不同的两个err对比成功。
 - go支持多参数返回，一般最后一个参数是err，必须先判断err才使用value，除非你不关心value，即可忽略err.
 - go的panic与别的语言的exception不一样，需谨慎或不使用，一般在api中第一个middleware就是recover panic.
-- 野生goroutine如果panic 无法被recover， 需要构造一个 func Go(x func()) 在其内部recover
+- 野生goroutine如果panic 无法被recover， 需要构造一个 [func Go(x func())][4] 在其内部recover
 - 强依赖、配置文件: panic , 弱依赖: 不需要panic  
     - Q1: 案例: 如果数据库连不上但redis连得上,是否需要panic.
     - A1: 取决于业务，如果读多写少，可以先不panic，等待数据库重连。
@@ -74,7 +74,7 @@
     - 错误只被日志记录一次。
     - [github.com/pkg/errors][1]
 - [pkg/errors][1]
-    - errors.Wrap 附带错误的堆栈信息
+    - [errors.Wrap][5] 附带错误的堆栈信息
     - errors.WithMessage 附带自定义信息
     - errors.Cause(err error) 返回最底层error
     - 通过 %+v 输出err的堆栈信息
@@ -107,3 +107,5 @@
 [1]: https://github.com/pkg/errors
 [2]: https://go.googlesource.com/proposal/+/master/design/29934-error-values.md
 [3]: https://github.com/XYZ0901/Go-000/blob/main/Week02/code/err_struct.go
+[4]: https://github.com/XYZ0901/Go-000/blob/main/Week02/code/painc_goroutine.go
+[5]: https://github.com/XYZ0901/Go-000/blob/main/Week02/code/err_wrap.go
