@@ -58,7 +58,7 @@
 ### Eliminate error handling by eliminating errors
 - 代码编写时可以直接返回err的 别用 err != nil
 - 利用已经封装好的标准库方法去消除代码中的err
-- 将err封装进struct,利用struct的方法将if err隐藏起来，在方法内部判断struct.err
+- [将err封装进struct][3],利用struct的方法将if err隐藏起来，在方法内部判断struct.err
 ### Wrap errors
 - 在之前的auth代码中错误会一直上抛，当程序顶端捕获到err的时候才会打印相关日志，但没有上下文信息。
 - 在⬆️的基础上，我们改进上抛错误机制，引入`fmt.Errorf("xxxxx fail:%v",err)`,虽然有了具体错误信息，
@@ -95,5 +95,15 @@
 - 利用sentinel error: err == ErrNotFound
 - 实现 error interface 的自定义 error struct 并利用断言: err.(*NotFoundError)
 - 利用 fmt.Errorf 丢弃了除err的文本信息外的其它信息
+### Errors in Go 1.13
+- **Unwrap、Is、As**
+- before 1.13: `fmt.Errorf("%v",err)` | 1.13: `fmt.Errorf("%w",err)` %w可以用于 Is As
+- 可自定义 Is As 的错误方法
+### errors vs github.com/pkg/errors
+- errors 没有携带堆栈信息，pkg/errors 兼容 errors 的Is As
+## Go 2 Error Inspection
+- [https://go.googlesource.com/proposal/+/master/design/29934-error-values.md][2]
 
 [1]: https://github.com/pkg/errors
+[2]: https://go.googlesource.com/proposal/+/master/design/29934-error-values.md
+[3]: https://github.com/XYZ0901/Go-000/blob/main/Week02/code/err_struct.go
