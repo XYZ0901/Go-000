@@ -1,0 +1,1 @@
+使用 `make test` 测试 Mutex、RWMutex、atomic 三者性能
